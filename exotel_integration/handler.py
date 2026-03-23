@@ -70,7 +70,7 @@ def update_call_log(call_payload, status="Ringing", call_log=None):
 			# resetting this because call might be redirected to other number
 			call_log.to = call_payload.get("DialWhomNumber")
 			call_log.duration = call_payload.get("DialCallDuration") or call_payload.get('ConversationDuration') or 0
-			call_log.recording_url = call_payload.get("RecordingUrl")
+			call_log.recording_url = call_log.recording_url or call_payload.get("RecordingUrl")
 			call_log.start_time = call_payload.get("StartTime")
 			call_log.end_time = call_payload.get("EndTime")
 			call_log.save(ignore_permissions=True)
@@ -86,11 +86,11 @@ def get_call_log_status(call_payload):
 	call_type = call_payload.get("CallType")
 	dial_call_status = call_payload.get("DialCallStatus")
 
-	if call_type == "incomplete" and dial_call_status == "no-answer":
+	if dial_call_status == "no-answer":
 		status = "No Answer"
-	elif call_type == "client-hangup" and dial_call_status == "canceled":
+	elif dial_call_status == "canceled":
 		status = "Canceled"
-	elif call_type == "incomplete" and dial_call_status == "failed":
+	elif dial_call_status == "failed":
 		status = "Failed"
 	elif call_type == "completed":
 		status = "Completed"
@@ -163,6 +163,7 @@ def make_a_call(to_number, caller_id=None, link_to_document=None):
 				else "false",
 				"StatusCallback": get_status_updater_url(),
 				"StatusCallbackEvents[0]": "terminal",
+				"StatusCallbackEvents[1]": "answered",
 			},
 		)
 		response.raise_for_status()
